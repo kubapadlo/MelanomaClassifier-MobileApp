@@ -1,0 +1,5 @@
+# Środowisko
+venv
+
+# python
+__pycache__
