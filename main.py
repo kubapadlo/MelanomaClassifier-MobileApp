@@ -1,36 +1,41 @@
+import argparse 
 import torch
+import wandb
 from src.dataset import get_dataloaders
 from src.model import get_model
-from src.train import run_training  
-import wandb
+from src.train import run_training
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Trening modelu na czerniaka")
+    parser.add_argument('--lr', type=float, default=0.0001, help='Learning Rate')
+    parser.add_argument('--epochs', type=int, default=10, help='Liczba epok')
+    parser.add_argument('--batch_size', type=int, default=32, help='Rozmiar paczki')
+    parser.add_argument('--model_name', type=str, default='resnet50-test', help='Nazwa eksperymentu w W&B')
+    return parser.parse_args()
 
 def main():
+    args = parse_args() 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Używam urządzenia: {device}")
 
     wandb.init(
-        project="melanoma-detection", 
-        name="resnet50-eksperyment-1",
+        project="melanoma-detection",
+        name=args.model_name,
         config={
-            "learning_rate": 0.0001,
-            "epochs": 4,
-            "batch_size": 32,
-            "model_architecture": "ResNet50",
-            "optimizer": "Adam"
+            "learning_rate": args.lr,
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
         }
     )
-    config = wandb.config 
-
-    train_loader, test_loader = get_dataloaders(batch_size=config.batch_size)
-
+    
+    train_loader, test_loader = get_dataloaders(batch_size=args.batch_size)
     model = get_model(num_classes=2).to(device)
 
     trained_model = run_training(
         model=model,
         train_loader=train_loader,
-        test_loader=test_loader, 
-        num_epochs=config.epochs,
-        lr=config.learning_rate,
+        test_loader=test_loader,
+        num_epochs=args.epochs,
+        lr=args.lr,
         device=device
     )
 
