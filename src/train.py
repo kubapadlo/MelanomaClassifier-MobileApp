@@ -4,6 +4,7 @@ import torch.optim as optim
 import wandb
 from tqdm import tqdm
 
+
 def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
                  device="cpu", patience=5, weight_decay=1e-4):
 
@@ -14,16 +15,11 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
     best_val_acc = 0.0
     epochs_no_improve = 0
 
-    epoch_bar = tqdm(range(num_epochs), desc="Trening", unit="epoka")
-
-    for epoch in epoch_bar:
+    for epoch in tqdm(range(num_epochs), desc="Epoki"):
         model.train()
         running_loss, correct, total = 0.0, 0, 0
 
-        train_bar = tqdm(train_loader, desc=f"  Epoka {epoch+1} [train]", 
-                         leave=False, unit="batch")
-
-        for images, labels in train_bar:
+        for images, labels in tqdm(train_loader, desc="Train", leave=False):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(images)
@@ -33,12 +29,8 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
             optimizer.step()
 
             running_loss += loss.item()
-            _, predicted = torch.max(outputs, 1)
+            correct += (torch.max(outputs, 1)[1] == labels).sum().item()
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-            train_bar.set_postfix(loss=f"{loss.item():.4f}", 
-                                  acc=f"{100*correct/total:.1f}%")
 
         train_loss = running_loss / len(train_loader)
         train_acc = 100 * correct / total
@@ -46,22 +38,16 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
 
         val_loss, val_acc = evaluate(model, test_loader, criterion, device)
 
-        epoch_bar.set_postfix(
-            train_loss=f"{train_loss:.4f}", train_acc=f"{train_acc:.1f}%",
-            val_loss=f"{val_loss:.4f}",   val_acc=f"{val_acc:.1f}%"
-        )
+        tqdm.write(f"Ep {epoch+1:02d}/{num_epochs} | Train {train_loss:.3f}/{train_acc:.1f}% | Val {val_loss:.3f}/{val_acc:.1f}%")
 
-        wandb.log({
-            "epoch": epoch + 1,
-            "train_loss": train_loss, "train_acc": train_acc,
-            "val_loss": val_loss,     "val_acc": val_acc,
-            "lr": scheduler.get_last_lr()[0]
-        })
+        wandb.log({"epoch": epoch+1, "train_loss": train_loss, "train_acc": train_acc,
+                   "val_loss": val_loss, "val_acc": val_acc, "lr": scheduler.get_last_lr()[0]})
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             epochs_no_improve = 0
             torch.save(model.state_dict(), "best_model.pth")
+            tqdm.write(f"  ✓ Nowy najlepszy model: {val_acc:.1f}%")
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= patience:
@@ -75,18 +61,11 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
 def evaluate(model, loader, criterion, device):
     model.eval()
     total_loss, correct, total = 0.0, 0, 0
-
-    val_bar = tqdm(loader, desc="  Walidacja", leave=False, unit="batch")
-
     with torch.no_grad():
-        for images, labels in val_bar:
+        for images, labels in tqdm(loader, desc="Val", leave=False):
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             total_loss += criterion(outputs, labels).item()
-            _, predicted = torch.max(outputs, 1)
+            correct += (torch.max(outputs, 1)[1] == labels).sum().item()
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-            val_bar.set_postfix(acc=f"{100*correct/total:.1f}%")
-
     return total_loss / len(loader), 100 * correct / total
