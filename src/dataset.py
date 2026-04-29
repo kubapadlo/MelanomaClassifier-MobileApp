@@ -1,45 +1,25 @@
-import kagglehub
-from pathlib import Path
-from torchvision import transforms, datasets
-from torch.utils.data import DataLoader
+import torch.nn as nn
+from torchvision import models
 
-DATASET_ID = "hasnainjaved/melanoma-skin-cancer-dataset-of-10000-images"
+def get_model(num_classes=2, unfreeze_layers=1):
+    model = models.resnet50(weights='DEFAULT')
 
-def get_paths():
-    base_path = kagglehub.dataset_download(DATASET_ID)
-    train_path = Path(base_path) / 'melanoma_cancer_dataset' / 'train'
-    test_path  = Path(base_path) / 'melanoma_cancer_dataset' / 'test'
-    return train_path, test_path
+    # Zamroź całą sieć
+    for param in model.parameters():
+        param.requires_grad = False
 
-def get_transforms():
-    train_transforms = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomVerticalFlip(p=0.2),
-        transforms.RandomRotation(degrees=15),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    test_transforms = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
-    ])
-    return train_transforms, test_transforms
+    # Odmroź ostatnie N bloków layer4
+    if unfreeze_layers >= 1:
+        for param in model.layer4.parameters():
+            param.requires_grad = True
+    if unfreeze_layers >= 2:
+        for param in model.layer3.parameters():
+            param.requires_grad = True
 
-def get_dataloaders(batch_size=32):
-    train_path, test_path = get_paths()
-    train_tf, test_tf = get_transforms()
-
-    train_dataset = datasets.ImageFolder(root=train_path, transform=train_tf)
-    test_dataset  = datasets.ImageFolder(root=test_path,  transform=test_tf)
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size,
-                              shuffle=True,  num_workers=2)
-    test_loader  = DataLoader(test_dataset,  batch_size=batch_size,
-                              shuffle=False, num_workers=2)
-
-    return train_loader, test_loader
+    # Nowa głowica klasyfikacyjna z dropoutem
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Sequential(
+        nn.Dropout(p=0.4),
+        nn.Linear(num_ftrs, num_classes)
+    )
+    return model
