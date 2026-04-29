@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import wandb
-from tqdm import tqdm
-
 
 def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
                  device="cpu", patience=5, weight_decay=1e-4):
@@ -15,11 +13,11 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
     best_val_acc = 0.0
     epochs_no_improve = 0
 
-    for epoch in tqdm(range(num_epochs), desc="Epoki"):
+    for epoch in range(num_epochs):
         model.train()
         running_loss, correct, total = 0.0, 0, 0
 
-        for images, labels in tqdm(train_loader, desc="Train", leave=False):
+        for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(images)
@@ -38,7 +36,7 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
 
         val_loss, val_acc = evaluate(model, test_loader, criterion, device)
 
-        tqdm.write(f"Ep {epoch+1:02d}/{num_epochs} | Train {train_loss:.3f}/{train_acc:.1f}% | Val {val_loss:.3f}/{val_acc:.1f}%")
+        print(f"Ep {epoch+1:02d}/{num_epochs} | Train {train_loss:.3f}/{train_acc:.1f}% | Val {val_loss:.3f}/{val_acc:.1f}%")
 
         wandb.log({"epoch": epoch+1, "train_loss": train_loss, "train_acc": train_acc,
                    "val_loss": val_loss, "val_acc": val_acc, "lr": scheduler.get_last_lr()[0]})
@@ -47,11 +45,11 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
             best_val_acc = val_acc
             epochs_no_improve = 0
             torch.save(model.state_dict(), "best_model.pth")
-            tqdm.write(f"  ✓ Nowy najlepszy model: {val_acc:.1f}%")
+            print(f"  ✓ Nowy najlepszy model: {val_acc:.1f}%")
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= patience:
-                tqdm.write(f"Early stopping po {epoch+1} epokach.")
+                print(f"Early stopping po {epoch+1} epokach.")
                 break
 
     model.load_state_dict(torch.load("best_model.pth"))
@@ -62,7 +60,7 @@ def evaluate(model, loader, criterion, device):
     model.eval()
     total_loss, correct, total = 0.0, 0, 0
     with torch.no_grad():
-        for images, labels in tqdm(loader, desc="Val", leave=False):
+        for images, labels in loader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             total_loss += criterion(outputs, labels).item()
