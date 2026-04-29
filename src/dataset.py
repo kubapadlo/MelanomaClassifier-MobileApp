@@ -36,14 +36,6 @@ def get_transforms():
     return train_transforms, test_transforms
 
 
-def make_weighted_sampler(dataset):
-    """Wyrównuje klasy przez oversampling mniejszości."""
-    targets = [label for _, label in dataset.samples]
-    class_counts = np.bincount(targets)
-    weights = 1.0 / class_counts[targets]
-    return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
-
-
 def get_dataloaders(batch_size=32):
     train_path, test_path = get_paths()
     train_tf, test_tf = get_transforms()
@@ -51,10 +43,9 @@ def get_dataloaders(batch_size=32):
     train_dataset = datasets.ImageFolder(root=train_path, transform=train_tf)
     test_dataset  = datasets.ImageFolder(root=test_path,  transform=test_tf)
 
-    sampler = make_weighted_sampler(train_dataset)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size,
-                              sampler=sampler, num_workers=4, pin_memory=True)
+                              shuffle=True, num_workers=4, pin_memory=True)
     test_loader  = DataLoader(test_dataset,  batch_size=batch_size,
                               shuffle=False,  num_workers=4, pin_memory=True)
 
