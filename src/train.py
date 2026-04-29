@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 import wandb
 
-def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001, device="cpu", patience=5):
+def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001, device="cpu", patience=5, weight_decay=1e-4):
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # label smoothing redukuje overfitting
-    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
 
     best_val_acc = 0.0
