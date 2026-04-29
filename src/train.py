@@ -5,7 +5,7 @@ import wandb
 
 def run_training(model, train_loader, test_loader, num_epochs=5, lr=0.0001, device="cpu"):
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = optim.AdamW(model.parameters(), lr=lr)
     
     for epoch in range(num_epochs):
         model.train()
