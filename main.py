@@ -16,9 +16,9 @@ def set_seed(seed: int):
 def parse_args():
     parser = argparse.ArgumentParser(description="Trening modelu na czerniaka")
     parser.add_argument('--lr',             type=float, default=0.0001)
-    parser.add_argument('--epochs',         type=int,   default=20)
+    parser.add_argument('--epochs',         type=int,   default=5)
     parser.add_argument('--batch_size',     type=int,   default=32)
-    parser.add_argument('--patience',       type=int,   default=5)
+    parser.add_argument('--patience',       type=int,   default=2)
     parser.add_argument('--unfreeze_layers',type=int,   default=1)
     parser.add_argument('--weight_decay',   type=float, default=1e-4)
     parser.add_argument('--seed',           type=int,   default=42)

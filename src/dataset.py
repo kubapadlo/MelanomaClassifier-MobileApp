@@ -45,9 +45,9 @@ def get_dataloaders(batch_size=32):
 
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size,
-                              shuffle=True, num_workers=4, pin_memory=True)
+                              shuffle=True, num_workers=2, pin_memory=True)
     test_loader  = DataLoader(test_dataset,  batch_size=batch_size,
-                              shuffle=False,  num_workers=4, pin_memory=True)
+                              shuffle=False,  num_workers=2, pin_memory=True)
 
     print(f"Klasy: {train_dataset.classes}")
     print(f"Train: {len(train_dataset)} | Test: {len(test_dataset)}")
