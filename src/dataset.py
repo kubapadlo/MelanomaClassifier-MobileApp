@@ -16,7 +16,7 @@ def get_paths():
 def get_transforms():
     train_transforms = transforms.Compose([
         transforms.Resize((256, 256)),
-        transforms.RandomCrop(224),                          # crop zamiast zwykłego resize
+        transforms.RandomCrop(224),                       
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomVerticalFlip(p=0.2),
         transforms.RandomRotation(degrees=30),
@@ -25,7 +25,7 @@ def get_transforms():
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225]),
-        transforms.RandomErasing(p=0.1),                    # maskuje losowe fragmenty
+        transforms.RandomErasing(p=0.1),                    
     ])
     test_transforms = transforms.Compose([
         transforms.Resize((224, 224)),

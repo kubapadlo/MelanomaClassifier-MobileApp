@@ -3,3 +3,9 @@ venv
 
 # python
 __pycache__
+
+# modele
+*.pth
+
+# local
+notes.md

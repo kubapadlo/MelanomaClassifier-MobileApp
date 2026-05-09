@@ -2,18 +2,22 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import wandb
+from pathlib import Path
 
-def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
-                 device="cpu", patience=5, weight_decay=1e-4):
+
+def run_training(model, train_loader, test_loader, args, device="cpu"):
 
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
     best_val_acc = 0.0
     epochs_no_improve = 0
 
-    for epoch in range(num_epochs):
+    best_model_path = Path("models") / f"{args.model_name}.pth"
+    best_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+    for epoch in range(args.epochs):
         model.train()
         running_loss, correct, total = 0.0, 0, 0
 
@@ -36,7 +40,7 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
 
         val_loss, val_acc = evaluate(model, test_loader, criterion, device)
 
-        print(f"Ep {epoch+1:02d}/{num_epochs} | Train {train_loss:.3f}/{train_acc:.1f}% | Val {val_loss:.3f}/{val_acc:.1f}%")
+        print(f"Ep {epoch+1:02d}/{args.epochs} | Train {train_loss:.3f}/{train_acc:.1f}% | Val {val_loss:.3f}/{val_acc:.1f}%")
 
         wandb.log({"epoch": epoch+1, "train_loss": train_loss, "train_acc": train_acc,
                    "val_loss": val_loss, "val_acc": val_acc, "lr": scheduler.get_last_lr()[0]})
@@ -44,15 +48,21 @@ def run_training(model, train_loader, test_loader, num_epochs=20, lr=0.0001,
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             epochs_no_improve = 0
-            torch.save(model.state_dict(), "best_model.pth")
+            torch.save({
+                "model_state_dict": model.state_dict(),
+                "config": vars(args),
+                "val_acc": val_acc,
+                "epoch": epoch
+            }, best_model_path)
             print(f"  ✓ Nowy najlepszy model: {val_acc:.1f}%")
         else:
             epochs_no_improve += 1
-            if epochs_no_improve >= patience:
+            if epochs_no_improve >= args.patience:
                 print(f"Early stopping po {epoch+1} epokach.")
                 break
 
-    model.load_state_dict(torch.load("best_model.pth"))
+    checkpoint = torch.load(best_model_path, weights_only=True)
+    model.load_state_dict(checkpoint["model_state_dict"])
     return model
 
 
