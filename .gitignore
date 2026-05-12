@@ -1,11 +1,34 @@
-# Środowisko
-venv
+# 1. Środowiska wirtualne Pythona
+venv/
+env/
+.venv/
 
-# python
-__pycache__
+# 2. Pliki tymczasowe Pythona i cache
+__pycache__/
+*.pyc
+.pytest_cache/
 
-# modele
+# 3. Wytrenowane modele AI (BARDZO WAŻNE!)
 *.pth
+*.pt
+*.onnx
+model_gita.pth
 
-# local
+# 4. Zbiory danych (Datasety z Kaggle)
+melanoma_cancer_dataset/
+*.zip
+*.tar.gz
+*.csv
+
+# 5. Pliki z hasłami, kluczami API i adresami IP
+.env
+
+# 6. Pliki systemowe (Windows/Mac)
+.DS_Store
+Thumbs.db
+
+# 7. Folder biblioteki wandb (lokalne logi)
+wandb/
+
+# 8. local
 notes.md
