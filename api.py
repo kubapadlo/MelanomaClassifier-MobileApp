@@ -8,7 +8,7 @@ from src.model import get_model
 app = FastAPI()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def load_trained_model(model_path="model_gita.pth"):
+def load_trained_model(model_path="best_model.pth"):
     # 1. Wczytaj checkpoint
     checkpoint = torch.load(model_path, map_location=device)
     config = checkpoint["config"]
@@ -47,6 +47,6 @@ async def predict(file: UploadFile = File(...)):
     
     return {
         "prediction": class_names[predicted_class.item()],
-        "confidence": float(confidence.item()),
+        "confidence": round(float(confidence.item()), 4),
         "model_used": model_config["model_name"]
     }
