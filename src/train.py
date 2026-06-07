@@ -11,7 +11,6 @@ from sklearn.metrics import roc_auc_score, f1_score, confusion_matrix
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class Metrics:
     loss:        float
@@ -93,8 +92,12 @@ def run_training(model, train_loader, val_loader, test_loader, args, device):
         if val_m.auc > best_val_auc:
             best_val_auc = val_m.auc
             no_improve   = 0
-            torch.save({"model_state_dict": model.state_dict(),
-                        "val_metrics": asdict(val_m), "epoch": epoch}, best_path)
+            torch.save({
+                "model_state_dict": model.state_dict(),
+                "val_metrics": asdict(val_m),
+                "epoch": epoch,
+                "config": vars(args)  
+            }, best_path)
             logger.info("  ✓ nowy best: AUC=%.4f", val_m.auc)
         else:
             no_improve += 1
